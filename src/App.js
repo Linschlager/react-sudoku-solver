@@ -1,9 +1,10 @@
 import React, {useEffect, useReducer, useState} from 'react';
+import uuid  from 'uuid';
 import './App.css';
 import { checkAllFeedback } from "./tools/sudoku-checker";
 import solve from "./tools/sudoku-solver";
 
-const getEmtpySudoku = () => [
+const getEmptySudoku = () => [
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -49,10 +50,27 @@ const reducer = (state, action) => {
           return col;
         })),
       };
+    case 'REMOVE_QUEUE_ITEM':
+      return {
+        ...state,
+        queue: state.queue.filter(item => item.id !== action.payload),
+      };
+    case 'QUEUE_UPDATE_FIELD':
+      return {
+        ...state,
+        queue: [
+          ...state.queue,
+          {
+            id: uuid.v4(),
+            ...action.payload
+          },
+        ]
+      };
     case 'CLEAR':
       return {
         ...state,
-        sudoku: getEmtpySudoku(),
+        sudoku: getEmptySudoku(),
+        queue: [],
       };
     default:
       console.error(action);
@@ -61,7 +79,7 @@ const reducer = (state, action) => {
 };
 
 const App = () => {
-  const [state, dispatch] = useReducer(reducer, {selected: -1, sudoku: getEmtpySudoku()});
+  const [state, dispatch] = useReducer(reducer, {selected: -1, sudoku: getEmptySudoku(), queue: []});
   const [invalidFields, setInvalidFields] = useState([]);
   useEffect(() => {
     const onKey = (e) => {
@@ -84,13 +102,23 @@ const App = () => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey)
   });
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (state.queue.length > 0) {
+        const nextAction = state.queue[0];
+        dispatch({ type: 'REMOVE_QUEUE_ITEM', payload: nextAction.id });
+        dispatch({ type: 'UPDATE_FIELD', payload: nextAction });
+      }
+    }, 50);
+    return () => clearInterval(intervalId);
+  }, [state.queue]);
   const validateSudoku = () => {
     setInvalidFields(checkAllFeedback(state.sudoku));
   };
   const solveSudoku = () => {
     solve(state.sudoku, 0, (row, col, value) => {
       dispatch({
-        type: 'UPDATE_FIELD',
+        type: 'QUEUE_UPDATE_FIELD',
         payload: {
           row,
           col,
@@ -99,7 +127,6 @@ const App = () => {
       })
     })
   };
-
   const clearSudoku = () => {
     dispatch({
       type: 'CLEAR',
