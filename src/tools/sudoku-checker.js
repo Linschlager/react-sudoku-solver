@@ -91,3 +91,19 @@ export const checkAll = (sudoku) => {
   }
   return valid;
 };
+
+/**
+ * Mirrors checkAll but gives feedback which fields are invalid
+ * @param sudoku
+ * @returns {[]}
+ */
+export const checkAllFeedback = (sudoku) => {
+  const invalid = [];
+  // Loop through all fields until one is invalid (`&& valid`-check)
+  for (let col = 0; col < 9; col++) { // col
+    for (let row = 0; row < 9; row++) { // row
+      if (!checkOne(sudoku, col, row)) invalid.push(row*9+col);
+    }
+  }
+  return invalid;
+};

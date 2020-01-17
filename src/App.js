@@ -1,5 +1,6 @@
 import React, {useEffect, useReducer, useState} from 'react';
 import './App.css';
+import { checkAllFeedback } from "./tools/sudoku-checker";
 
 const emptySudoku = [
   [1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -57,6 +58,7 @@ const reducer = (state, action) => {
 
 const App = () => {
   const [state, dispatch] = useReducer(reducer, {selected: -1, sudoku: emptySudoku});
+  const [invalidFields, setInvalidFields] = useState([]);
   useEffect(() => {
     const onKey = (e) => {
       if (e.code.startsWith('Digit')) {
@@ -79,6 +81,9 @@ const App = () => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey)
   });
+  const validateSudoku = () => {
+    setInvalidFields(checkAllFeedback(state.sudoku));
+  };
   return (
    <div className="App">
      <div className="sudoku">
@@ -86,10 +91,12 @@ const App = () => {
         <div className="row" key={`row-${rowI}`}>
           {row.map((col, colI) => {
             const index = rowI * 9 + colI;
+            const validityClass = invalidFields.includes(index) ? 'invalid' : 'valid';
+            const selectedClass = state.selected === index ? 'selected' : '';
             return (
              <div
               key={`col-${colI}`}
-              className={`col ${state.selected === index ? 'selected' : ''}`}
+              className={`col ${validityClass} ${selectedClass}`}
               onClick={() => dispatch({ type: 'SET_SELECTED', payload: index })}
              >
                <div className={`field`}>
@@ -101,6 +108,7 @@ const App = () => {
         </div>
        ))}
      </div>
+     <button onClick={validateSudoku}>Check Solution</button>
    </div>
   );
 };
