@@ -5,6 +5,7 @@
 .sudoku {
   border: 5px solid black;
   margin: 100px 100px 0;
+  max-width: 600px;
 }
 
 .row {

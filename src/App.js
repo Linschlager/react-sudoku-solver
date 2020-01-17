@@ -1,9 +1,10 @@
 import React, {useEffect, useReducer, useState} from 'react';
 import './App.css';
 import { checkAllFeedback } from "./tools/sudoku-checker";
+import solve from "./tools/sudoku-solver";
 
-const emptySudoku = [
-  [1, 2, 3, 4, 5, 6, 7, 8, 9],
+const getEmtpySudoku = () => [
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -40,7 +41,6 @@ const reducer = (state, action) => {
         selected: move(state.selected, action.payload)
       };
     case 'UPDATE_FIELD':
-      console.log(action);
       return {
         ...state,
         sudoku: state.sudoku.map((row, rowI) => row.map((col, colI) => {
@@ -49,7 +49,11 @@ const reducer = (state, action) => {
           return col;
         })),
       };
-
+    case 'CLEAR':
+      return {
+        ...state,
+        sudoku: getEmtpySudoku(),
+      };
     default:
       console.error(action);
       return state;
@@ -57,7 +61,7 @@ const reducer = (state, action) => {
 };
 
 const App = () => {
-  const [state, dispatch] = useReducer(reducer, {selected: -1, sudoku: emptySudoku});
+  const [state, dispatch] = useReducer(reducer, {selected: -1, sudoku: getEmtpySudoku()});
   const [invalidFields, setInvalidFields] = useState([]);
   useEffect(() => {
     const onKey = (e) => {
@@ -75,7 +79,6 @@ const App = () => {
           type: 'MOVE_SELECTED',
           payload: e.code.substring(5)
         });
-        console.log(e);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -84,32 +87,52 @@ const App = () => {
   const validateSudoku = () => {
     setInvalidFields(checkAllFeedback(state.sudoku));
   };
+  const solveSudoku = () => {
+    solve(state.sudoku, 0, (row, col, value) => {
+      dispatch({
+        type: 'UPDATE_FIELD',
+        payload: {
+          row,
+          col,
+          value,
+        }
+      })
+    })
+  };
+
+  const clearSudoku = () => {
+    dispatch({
+      type: 'CLEAR',
+    });
+  };
   return (
-   <div className="App">
-     <div className="sudoku">
-       {state.sudoku.map((row, rowI) => (
-        <div className="row" key={`row-${rowI}`}>
-          {row.map((col, colI) => {
-            const index = rowI * 9 + colI;
-            const validityClass = invalidFields.includes(index) ? 'invalid' : 'valid';
-            const selectedClass = state.selected === index ? 'selected' : '';
-            return (
-             <div
-              key={`col-${colI}`}
-              className={`col ${validityClass} ${selectedClass}`}
-              onClick={() => dispatch({ type: 'SET_SELECTED', payload: index })}
-             >
-               <div className={`field`}>
-                 {col > 0 ? col : ''}
-               </div>
-             </div>
-            );
-          })}
-        </div>
-       ))}
-     </div>
-     <button onClick={validateSudoku}>Check Solution</button>
-   </div>
+    <div className="App">
+      <div className="sudoku">
+        {state.sudoku.map((row, rowI) => (
+          <div className="row" key={`row-${rowI}`}>
+            {row.map((col, colI) => {
+              const index = rowI * 9 + colI;
+              const validityClass = invalidFields.includes(index) ? 'invalid' : 'valid';
+              const selectedClass = state.selected === index ? 'selected' : '';
+              return (
+                <div
+                  key={`col-${colI}`}
+                  className={`col ${validityClass} ${selectedClass}`}
+                  onClick={() => dispatch({ type: 'SET_SELECTED', payload: index })}
+                >
+                  <div className={`field`}>
+                    {col > 0 ? col : ''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <button onClick={validateSudoku}>Check Solution</button><br />
+      <button onClick={solveSudoku}>Solve Sudoku</button><br />
+      <button onClick={clearSudoku}>Clear</button>
+    </div>
   );
 };
 
