@@ -53,6 +53,7 @@ export const checkSquare = (sudoku, col, row) => {
   // Get the top left item in the square
   col = Math.floor(col / subS) * subS;
   row = Math.floor(row / subS) * subS;
+  // Loop through all 3x3 fields of the square until one is invalid (`&& valid`-check)
   for (let i = 0; i < subS && valid; i++) {
     for (let j = 0; j < subS && valid; j++) {
       const value = sudoku[row + i][col + j];
@@ -66,10 +67,23 @@ export const checkSquare = (sudoku, col, row) => {
   return valid;
 };
 
+/**
+ * Checks if the value of one single field is possible
+ * @param sudoku Sudoku to check
+ * @param col Column of field to check
+ * @param row Row of field to check
+ * @returns {boolean} Is the intersecting field possible in the current state
+ */
 export const checkOne = (sudoku, col, row) => checkRow(sudoku, row) && checkCol(sudoku, col) && checkSquare(sudoku, col, row);
 
+/**
+ * Loops through all 81 fields and calls checkOne
+ * @param sudoku
+ * @returns {boolean}
+ */
 export const checkAll = (sudoku) => {
   let valid = true;
+  // Loop through all fields until one is invalid (`&& valid`-check)
   for (let i = 0; i < 9 && valid; i++) {
     for (let j = 0; j < 9 && valid; j++) {
       if (!checkOne(sudoku, i, j)) valid = false;
