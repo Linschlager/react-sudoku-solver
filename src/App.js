@@ -131,7 +131,6 @@ const App = () => {
   }, [state.queue, ]);
   const solveSudoku = () => {
     const possibleSolutions = solve(state.sudoku);
-    console.log(possibleSolutions);
     dispatch({
       type: 'UPDATE_SUDOKU',
       payload: possibleSolutions[0]
