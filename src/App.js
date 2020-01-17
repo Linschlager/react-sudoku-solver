@@ -1,8 +1,7 @@
-import React, {useEffect, useReducer, useState} from 'react';
+import React, {useEffect, useReducer} from 'react';
 import uuid  from 'uuid';
 import './App.css';
-import { checkAllFeedback } from "./tools/sudoku-checker";
-import solve from "./tools/sudoku-solver";
+import solve  from "./tools/sudoku-solver";
 
 const getEmptySudoku = () => [
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -15,6 +14,19 @@ const getEmptySudoku = () => [
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
+
+const getDefaultSudoku = () => [
+  [8, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 3, 6, 0, 0, 0, 0, 0],
+  [0, 7, 0, 0, 9, 0, 2, 0, 0],
+  [0, 5, 0, 0, 0, 7, 0, 0, 0],
+  [0, 0, 0, 0, 4, 5, 7, 0, 0],
+  [0, 0, 0, 1, 0, 0, 0, 3, 0],
+  [0, 0, 1, 0, 0, 0, 0, 6, 8],
+  [0, 0, 8, 5, 0, 0, 0, 1, 0],
+  [0, 9, 0, 0, 0, 0, 4, 0, 0],
+];
+
 const move = (current, direction) => {
   switch(direction) {
     case 'Up':
@@ -50,6 +62,11 @@ const reducer = (state, action) => {
           return col;
         })),
       };
+    case 'UPDATE_SUDOKU':
+      return {
+        ...state,
+        sudoku: action.payload,
+      };
     case 'REMOVE_QUEUE_ITEM':
       return {
         ...state,
@@ -71,6 +88,7 @@ const reducer = (state, action) => {
         ...state,
         sudoku: getEmptySudoku(),
         queue: [],
+        selected: -1
       };
     default:
       console.error(action);
@@ -79,8 +97,7 @@ const reducer = (state, action) => {
 };
 
 const App = () => {
-  const [state, dispatch] = useReducer(reducer, {selected: -1, sudoku: getEmptySudoku(), queue: []});
-  const [invalidFields, setInvalidFields] = useState([]);
+  const [state, dispatch] = useReducer(reducer, {selected: -1, sudoku: getDefaultSudoku(), queue: []});
   useEffect(() => {
     const onKey = (e) => {
       if (e.code.startsWith('Digit')) {
@@ -109,29 +126,23 @@ const App = () => {
         dispatch({ type: 'REMOVE_QUEUE_ITEM', payload: nextAction.id });
         dispatch({ type: 'UPDATE_FIELD', payload: nextAction });
       }
-    }, 50);
+    }, 20);
     return () => clearInterval(intervalId);
-  }, [state.queue]);
-  const validateSudoku = () => {
-    setInvalidFields(checkAllFeedback(state.sudoku));
-  };
+  }, [state.queue, ]);
   const solveSudoku = () => {
-    solve(state.sudoku, 0, (row, col, value) => {
-      dispatch({
-        type: 'QUEUE_UPDATE_FIELD',
-        payload: {
-          row,
-          col,
-          value,
-        }
-      })
-    })
+    const possibleSolutions = solve(state.sudoku);
+    console.log(possibleSolutions);
+    dispatch({
+      type: 'UPDATE_SUDOKU',
+      payload: possibleSolutions[0]
+    });
   };
   const clearSudoku = () => {
     dispatch({
       type: 'CLEAR',
     });
   };
+
   return (
     <div className="App">
       <div className="sudoku">
@@ -139,12 +150,11 @@ const App = () => {
           <div className="row" key={`row-${rowI}`}>
             {row.map((col, colI) => {
               const index = rowI * 9 + colI;
-              const validityClass = invalidFields.includes(index) ? 'invalid' : 'valid';
               const selectedClass = state.selected === index ? 'selected' : '';
               return (
                 <div
                   key={`col-${colI}`}
-                  className={`col ${validityClass} ${selectedClass}`}
+                  className={`col ${selectedClass}`}
                   onClick={() => dispatch({ type: 'SET_SELECTED', payload: index })}
                 >
                   <div className={`field`}>
@@ -156,8 +166,7 @@ const App = () => {
           </div>
         ))}
       </div>
-      <button onClick={validateSudoku}>Check Solution</button><br />
-      <button onClick={solveSudoku}>Solve Sudoku</button><br />
+      <button onClick={solveSudoku}>Solve Sudoku</button>
       <button onClick={clearSudoku}>Clear</button>
     </div>
   );

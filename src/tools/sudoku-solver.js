@@ -2,40 +2,40 @@ import { checkAll, checkOne } from "./sudoku-checker";
 
 const SIZE = 9;
 
-const solve = (sudoku, fieldNr = 0, updateOriginal = null) => {
-  const row = Math.floor(fieldNr / SIZE);
-  const col = fieldNr % SIZE;
+const functionalSolve = (givenSudoku, allPossibleSolutions = false) => {
+  const possibleSolutions = [];
 
-  if (fieldNr === SIZE**2) { // Last field
-    return checkAll(sudoku);
-  }
-  if (sudoku[row][col] !== 0) { // Field already has a predefined value
-    return solve(sudoku, fieldNr+1, updateOriginal);
-  }
-  if (!checkOne(sudoku, col, row)) {
-    return returnValue(sudoku, row, col, false, updateOriginal);
-  }
+  const fnSolve = (sudoku, fieldNr = 0) => {
+    const row = Math.floor(fieldNr / SIZE);
+    const col = fieldNr % SIZE;
 
-  let found = false;
-  for (let val = 1; val <= SIZE && !found; val++) {
-    sudoku[row][col] = val;
-    if (updateOriginal) updateOriginal(row, col, val);
+    if (fieldNr === SIZE**2) {
+      const allOK = checkAll(sudoku);
+      if (allOK) possibleSolutions.push(sudoku);
+      return allOK;
+    } // It's done
+    if (sudoku[row][col] !== 0) return fnSolve(sudoku, fieldNr+1); // Skip filled out fields
+    if (!checkOne(sudoku, col, row)) return false; // Check field
 
-    found = checkOne(sudoku, col, row) && solve(sudoku, fieldNr+1, updateOriginal);
-  }
-  return returnValue(sudoku, row, col, found, updateOriginal);
+    let found = false;
+    for (let val = 1; val <= SIZE && (allPossibleSolutions || !found); val++) {
+      const newSudoku = changeValue(sudoku, row, col, val);
+      found = checkOne(newSudoku, col, row) && fnSolve(newSudoku, fieldNr+1);
+    }
+    return found;
+  };
+  const changeValue = (sudoku, row, col, val) => {
+    return sudoku.map((rowValue, rowIndex) => {
+      return rowValue.map((colValue, colIndex) => {
+        if (rowIndex === row && colIndex === col) {
+          return val;
+        }
+        return colValue;
+      });
+    });
+  };
+
+  fnSolve(givenSudoku);
+  return possibleSolutions;
 };
-
-const returnValue = (sudoku, row, col, valid, updateOriginal) => {
-  if (!valid) {
-    sudoku[row][col] = 0;
-    if (updateOriginal) updateOriginal(row, col, 0);
-  }
-  return valid;
-};
-
-const pureSolve = (sudoku, fieldNr = 0, updateOriginal = null) => {
-  solve(JSON.parse(JSON.stringify(sudoku)), fieldNr, updateOriginal);
-};
-
-export default pureSolve;
+export default functionalSolve;
