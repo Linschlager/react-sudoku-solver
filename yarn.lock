@@ -10194,7 +10194,7 @@ uuid@^3.0.1, uuid@^3.3.2:
 
 uuid@^3.4.0:
   version "3.4.0"
-  resolved "https://repo.nibr.novartis.net:443/artifactory/api/npm/npm/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
   integrity sha1-sj5DWK+oogL+ehAK8fX4g/AgB+4=
 
 v8-compile-cache@^2.0.3:

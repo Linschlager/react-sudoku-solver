@@ -2,6 +2,7 @@ import React, {useEffect, useReducer} from 'react';
 import uuid  from 'uuid';
 import './App.css';
 import solve  from "./tools/sudoku-solver";
+import Sudoku from "./Sudoku";
 
 const getEmptySudoku = () => [
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -14,7 +15,6 @@ const getEmptySudoku = () => [
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
-
 const getDefaultSudoku = () => [
   [8, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 3, 6, 0, 0, 0, 0, 0],
@@ -30,13 +30,13 @@ const getDefaultSudoku = () => [
 const move = (current, direction) => {
   switch(direction) {
     case 'Up':
-      return (current-9) % 81;
+      return (current-9+81) % 81;
     case 'Down':
-      return (current+9) % 81;
+      return (current+9+81) % 81;
     case 'Left':
-      return (current-1) % 81;
+      return (current-1+81) % 81;
     case 'Right':
-      return (current+1) % 81;
+      return (current+1+81) % 81;
     default:
       return current;
   }
@@ -129,11 +129,12 @@ const App = () => {
     }, 20);
     return () => clearInterval(intervalId);
   }, [state.queue, ]);
+
   const solveSudoku = () => {
-    const possibleSolutions = solve(state.sudoku);
+    const firstBestSolution = solve(state.sudoku);
     dispatch({
       type: 'UPDATE_SUDOKU',
-      payload: possibleSolutions[0]
+      payload: firstBestSolution
     });
   };
   const clearSudoku = () => {
@@ -144,27 +145,11 @@ const App = () => {
 
   return (
     <div className="App">
-      <div className="sudoku">
-        {state.sudoku.map((row, rowI) => (
-          <div className="row" key={`row-${rowI}`}>
-            {row.map((col, colI) => {
-              const index = rowI * 9 + colI;
-              const selectedClass = state.selected === index ? 'selected' : '';
-              return (
-                <div
-                  key={`col-${colI}`}
-                  className={`col ${selectedClass}`}
-                  onClick={() => dispatch({ type: 'SET_SELECTED', payload: index })}
-                >
-                  <div className={`field`}>
-                    {col > 0 ? col : ''}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+      <Sudoku
+        data={state.sudoku}
+        select={index => dispatch({ type: 'SET_SELECTED', payload: index })}
+        selectedField={state.selected}
+      />
       <button onClick={solveSudoku}>Solve Sudoku</button>
       <button onClick={clearSudoku}>Clear</button>
     </div>
